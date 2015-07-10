@@ -90,8 +90,6 @@ class PageParsing:
         TIME_RE = '\d{0,2}:\d{2}'
         time_resilts = re.findall(TIME_RE, content)
         return time_resilts
-        hours = [time.strptime(hm, "%H:%M") for hm in time_resilts]
-        return hours
 
     @classmethod
     def generate_route_stops_url(cls, schedule, direction, stop_no):
@@ -239,15 +237,6 @@ class PageParsing:
 
         pool = ThreadPool(4)
         pool.map(cls.run_thread, urls)
-        return
-        for url in urls:
-            line = list(url.keys())[0]
-            print(url)
-            # cls.get_route_directions_page(url.get(line))
-            t = threading.Thread(target=cls.get_route_directions_page, args = (url.get(line)))
-            t.daemon = True
-            t.start()
-            return
 
 if __name__ == '__main__':
     time_last = time.time()
