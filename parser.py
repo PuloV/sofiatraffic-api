@@ -192,9 +192,7 @@ class PageParsing:
         cls.getRouteDirectionsPage(url.get(line))
 
     @classmethod
-    def parseMainPage(cls):
-        r = requests.get(cls.MAIN_PAGE)
-        content = "{}".format(r.content)
+    def parseTrafficLinks(cls, content):
 
         class TransportLinksParser(HTMLParser):
 
@@ -227,12 +225,19 @@ class PageParsing:
 
         lp = TransportLinksParser()
         lp.feed(content)
+        return lp.data
+
+    @classmethod
+    def parseMainPage(cls):
+        r = requests.get(cls.MAIN_PAGE)
+        content = "{}".format(r.content)
+
+        urls = cls.parseTrafficLinks(content)
 
         today = datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m-%d')
         if not os.path.exists(today):
             os.mkdir(today)
 
-        urls = lp.data
         pool = ThreadPool(4)
         pool.map(cls.runThread, urls)
         return
