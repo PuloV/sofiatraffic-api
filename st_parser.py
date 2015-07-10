@@ -5,7 +5,6 @@ from html.parser import HTMLParser
 import json
 import os
 import datetime
-import threading
 from multiprocessing.dummy import Pool as ThreadPool
 
 
@@ -15,10 +14,10 @@ class PageParsing:
 
     MAIN_PAGE = "http://schedules.sofiatraffic.bg/"
     TRANSPORT_RE = '(tramway|trolleybus|autobus){1}'
-    a = 0
 
     @classmethod
     def parse_schedule_buttons(cls, content):
+        # get all schedule btn ids from the content
         SCHEDULE_BTN_ID_RE = 'id="schedule_\d*_button"'
         schedule_btns = re.findall(SCHEDULE_BTN_ID_RE, content)
 
@@ -33,6 +32,7 @@ class PageParsing:
 
     @classmethod
     def parse_schedule_name(cls, content, schedule_id):
+        # get the schedule name like "делник" / "предпразник / празник"
         SCHEDULE_BTN_RE = 'id="schedule_{}_button".*?>.*?</a>'.format(schedule_id)
         SCHEDULE_BTN_TITLE_RE = '<span>.*?</span>'
         schedule_btn = re.findall(SCHEDULE_BTN_RE, content)[-1]
@@ -49,6 +49,7 @@ class PageParsing:
 
     @classmethod
     def parse_routes_stops(cls, content):
+        # get all stations from the content
         STOPS_LI_RE = '<li class="\s+stop_\d*">.*?</li>'
         STOP_NAME_A_RE = '<a .*? class="stop_change".*?>.*?</a>'
         STOP_NAME_RE = '>.*?<'
@@ -87,6 +88,7 @@ class PageParsing:
 
     @classmethod
     def parse_routes_times(cls, content):
+        # get all time formated strings from the content
         TIME_RE = '\d{0,2}:\d{2}'
         time_resilts = re.findall(TIME_RE, content)
         return time_resilts
@@ -122,7 +124,8 @@ class PageParsing:
         return directions
 
     @classmethod
-    def get_route_directions_page(cls, route):
+    def get_route_stations(cls, route):
+        # get all stations by schedule directions for the route
         time_last = time.time()
         route_url = "{}{}".format(cls.MAIN_PAGE, route)
         r = requests.get(route_url)
@@ -192,12 +195,13 @@ class PageParsing:
 
     @classmethod
     def run_thread(cls, url):
+        # function that runs in the threads
         line = list(url.keys())[0]
-        cls.get_route_directions_page(url.get(line))
+        return cls.get_route_stations(url.get(line))
 
     @classmethod
     def parse_traffic_links(cls, content):
-
+        # get all transport page urls from the content
         class TransportLinksParser(HTMLParser):
 
             def __init__(self):
@@ -233,6 +237,7 @@ class PageParsing:
 
     @classmethod
     def parse_main_page(cls):
+        # get the main page and craw ...
         r = requests.get(cls.MAIN_PAGE)
         content = "{}".format(r.content)
 
@@ -242,6 +247,7 @@ class PageParsing:
         if not os.path.exists(today):
             os.mkdir(today)
 
+        # craw in 4 threads
         pool = ThreadPool(4)
         pool.map(cls.run_thread, urls)
 
