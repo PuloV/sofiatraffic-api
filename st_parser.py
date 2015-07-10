@@ -249,7 +249,6 @@ class PageParsing:
             t.start()
             return
 
-
 if __name__ == '__main__':
     time_last = time.time()
     print("Started parsing the {} website!".format(PageParsing.MAIN_PAGE))
