@@ -19,7 +19,7 @@ class PageParsing:
     a = 0
 
     @classmethod
-    def parseScheduleButtons(cls, content):
+    def parse_schedule_buttons(cls, content):
         SCHEDULE_BTN_ID_RE = 'id="schedule_\d*_button"'
         schedule_btns = re.findall(SCHEDULE_BTN_ID_RE, content)
 
@@ -33,7 +33,7 @@ class PageParsing:
         return btns
 
     @classmethod
-    def parseScheduleName(cls, content, schedule_id):
+    def parse_schedule_name(cls, content, schedule_id):
         SCHEDULE_BTN_RE = 'id="schedule_{}_button".*?>.*?</a>'.format(schedule_id)
         SCHEDULE_BTN_TITLE_RE = '<span>.*?</span>'
         schedule_btn = re.findall(SCHEDULE_BTN_RE, content)[-1]
@@ -43,13 +43,13 @@ class PageParsing:
         return schedule_title
 
     @classmethod
-    def checkIsWeeklySchedule(cls, schedule):
+    def check_is_weekly_schedule(cls, schedule):
         # no idea why this doesnt work
         # return schedule == "делник"
         return schedule == b'\xd0\xb4\xd0\xb5\xd0\xbb\xd0\xbd\xd0\xb8\xd0\xba'
 
     @classmethod
-    def parseRoutesStops(cls, content):
+    def parse_routes_stops(cls, content):
         STOPS_LI_RE = '<li class="\s+stop_\d*">.*?</li>'
         STOP_NAME_A_RE = '<a .*? class="stop_change".*?>.*?</a>'
         STOP_NAME_RE = '>.*?<'
@@ -87,7 +87,7 @@ class PageParsing:
         return stops
 
     @classmethod
-    def parseRoutesTimes(cls, content):
+    def parse_routes_times(cls, content):
         TIME_RE = '\d{0,2}:\d{2}'
         time_resilts = re.findall(TIME_RE, content)
         return time_resilts
@@ -95,12 +95,12 @@ class PageParsing:
         return hours
 
     @classmethod
-    def generateRouteStopsURL(cls, schedule, direction, stop_no):
+    def generate_route_stops_url(cls, schedule, direction, stop_no):
         # "server/html/schedule_load/4018/1165/1254"
         return "server/html/schedule_load/{}/{}/{}".format(schedule, direction, stop_no)
 
     @classmethod
-    def getRouteDirectionsPage(cls, route):
+    def get_route_directions_page(cls, route):
         time_last = time.time()
         route_url = "{}{}".format(cls.MAIN_PAGE, route)
         r = requests.get(route_url)
@@ -129,13 +129,13 @@ class PageParsing:
             directions.add((url, title))
 
         # get all times for this route
-        stops = cls.parseRoutesStops(content)
-        schedules = cls.parseScheduleButtons(content)
+        stops = cls.parse_routes_stops(content)
+        schedules = cls.parse_schedule_buttons(content)
         direction_stops_times = []
 
         for schedule in schedules:
             # get the schedule type name
-            schedule_name = cls.parseScheduleName(content, schedule)
+            schedule_name = cls.parse_schedule_name(content, schedule)
 
             for direction in directions:
                 # get the direction id
@@ -146,7 +146,7 @@ class PageParsing:
                     stop["schedule"] = schedule_name
                     stop["direction"] = direction[1]
                     # get the url for this stop
-                    stop_url = cls.generateRouteStopsURL(schedule, direction_id, stop["stop_no"])
+                    stop_url = cls.generate_route_stops_url(schedule, direction_id, stop["stop_no"])
                     stop_url = "{}{}".format(cls.MAIN_PAGE, stop_url)
                     sr = requests.get(stop_url)
                     stop_content = "{}".format(sr.content)
@@ -156,7 +156,7 @@ class PageParsing:
                         continue
 
                     # get all times for this route
-                    schedule_times = cls.parseRoutesTimes(stop_content)
+                    schedule_times = cls.parse_routes_times(stop_content)
 
                     # check for wrong request with empty body
                     if len(schedule_times) == 0:
@@ -166,7 +166,7 @@ class PageParsing:
                         "url": stop_url,
                         "times": schedule_times,
                         "schedule_id": schedule,
-                        "weekly_schedule": cls.checkIsWeeklySchedule(schedule_name),
+                        "weekly_schedule": cls.check_is_weekly_schedule(schedule_name),
                         "direction_id": direction_id,
                         "stop": {
                             "schedule": schedule_name,
@@ -187,12 +187,12 @@ class PageParsing:
         return direction_stops_times
 
     @classmethod
-    def runThread(cls, url):
+    def run_thread(cls, url):
         line = list(url.keys())[0]
-        cls.getRouteDirectionsPage(url.get(line))
+        cls.get_route_directions_page(url.get(line))
 
     @classmethod
-    def parseTrafficLinks(cls, content):
+    def parse_traffic_links(cls, content):
 
         class TransportLinksParser(HTMLParser):
 
@@ -228,24 +228,24 @@ class PageParsing:
         return lp.data
 
     @classmethod
-    def parseMainPage(cls):
+    def parse_main_page(cls):
         r = requests.get(cls.MAIN_PAGE)
         content = "{}".format(r.content)
 
-        urls = cls.parseTrafficLinks(content)
+        urls = cls.parse_traffic_links(content)
 
         today = datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m-%d')
         if not os.path.exists(today):
             os.mkdir(today)
 
         pool = ThreadPool(4)
-        pool.map(cls.runThread, urls)
+        pool.map(cls.run_thread, urls)
         return
         for url in urls:
             line = list(url.keys())[0]
             print(url)
-            # cls.getRouteDirectionsPage(url.get(line))
-            t = threading.Thread(target=cls.getRouteDirectionsPage, args = (url.get(line)))
+            # cls.get_route_directions_page(url.get(line))
+            t = threading.Thread(target=cls.get_route_directions_page, args = (url.get(line)))
             t.daemon = True
             t.start()
             return
@@ -253,6 +253,6 @@ class PageParsing:
 if __name__ == '__main__':
     time_last = time.time()
     print("Started parsing the {} website!".format(PageParsing.MAIN_PAGE))
-    PageParsing.parseMainPage()
+    PageParsing.parse_main_page()
     current_time = time.time()
     print("Parsed for {} seconds".format(current_time - time_last))
