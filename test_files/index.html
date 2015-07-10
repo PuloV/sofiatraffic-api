@@ -1,0 +1,435 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en-US" lang="en-US">
+	<head>
+				<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<meta name="generator" content="LogicaSoft framework v4.0" />
+		<meta name="Description" content="" />
+		<meta name="keywords" content="" />
+		<meta name="language" content=", " />
+		<meta http-equiv="content-language" content=", " />
+		<meta name="robots" content="index, follow" />
+		<meta name="revisit-after" content="20 days" />
+		<meta name="rating" content="General" />
+
+		<title>ЦГМ - Разписания - </title>
+
+		<base href="http://schedules.sofiatraffic.bg/" />
+
+
+		<link rel="stylesheet" type="text/css" href="web/css/basic.css"/>
+		<link rel="stylesheet" type="text/css" href="web/css/public/basic.css"/>
+		<link rel="stylesheet" type="text/css" href="web/css/logi.css"/>
+		<link rel="stylesheet" type="text/css" href="web/css/public/site.css"/>
+		<link rel="stylesheet" type="text/css" href="web/css/public/menu.css"/>
+		<link rel="stylesheet" type="text/css" href="web/css/calendar.css"/>
+		<!--[if IE]>
+			<link href="web/css/public/iefix.css" rel="stylesheet" type="text/css" />
+		<![endif]-->				<script type="text/javascript">
+			Logi_quickAccess = 3;
+		</script>
+
+		<script type="text/javascript" src="web/js/logi.js"></script>
+		<script type="text/javascript" src="web/js/public/site.js"></script>
+		<script type="text/javascript">
+			(function() {
+				Raz.run ('');
+				$onload (function() {
+					var baseHref = document.getElementsByTagName ('BASE')[0].href;
+					location.setUrl = function (url) {
+						location.href = baseHref + url;
+					};
+					Logi.Net.Ajax.loader ('<img src="web/img/public/loadingAnimation.gif" />');
+					Logi.Net.Ajax.loader.stop();
+					Logi.UI.MessageBox.SETUP.onClose = true;
+					Logi.Language.set ('web/js/languages/public/bg.js');
+					Raz.tooltipper = new Logi.Tooltip;
+				});
+
+				var intToTime = function (c) {
+					return c ? parseInt (c / 60) + ':' + String(100 + (c % 60)).substr (1) : '-';
+				};
+
+				Raz.addCommand ('show_course', 'schedule', function (uid, data) {
+					var times = data.split (',');
+					for (var t = 1; t < times.length; t++) { $el (uid + '_' + t).value = intToTime (times[t]); };
+					css_query_iterate (Logi.DOM.Element.hide, '.schedule_direction_view_course');
+					Logi.DOM.Element.show (uid + '_course');
+				});
+
+				Raz.addCommand ('print', 'schedule', function (container_id) {
+					window.open ('/server/print/div/' + container_id);
+				});
+
+				Raz.addCommand ('help', 'schedule', function (help_topic_id) {
+					Logi.UI.MessageBox.show ("\u041f\u043e\u043c\u043e\u0449\u043d\u0430 \u0438\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0438\u044f", '<div class="help_image"><img src="web/img/public/help/' + help_topic_id + '.png" alt="" /></div>', null, null, {
+						position: 'horizontal',
+						width: 723,
+						height: 500,
+						top: 0
+					});
+				});
+
+
+			$onload (function() {
+				var stop_ds = function (term, callback) {
+					Raz.getData (['stop_autocomplete', term], callback);
+				}
+        		var stop_from_am = new Logi.UI.Autocomplete.Manager (stop_ds,
+        			$el ('combined_schedule_from_stop'),
+        			$el ('combined_schedule_from_stop_autocomplete'),
+        			{
+        				minTextLength : 3,
+        				valueHolder : $el ('combined_schedule_from_stop_id'),
+        				autoInvalidate : true
+              		}
+              	);
+
+        		var stop_to_am = new Logi.UI.Autocomplete.Manager (stop_ds,
+        			$el ('combined_schedule_to_stop'),
+        			$el ('combined_schedule_to_stop_autocomplete'),
+        			{
+        				minTextLength : 3,
+        				valueHolder : $el ('combined_schedule_to_stop_id'),
+        				autoInvalidate : true
+              		}
+              	);
+
+			});
+
+			Raz.addCommand ('combinedSchedule', 'stop', function() {
+				var valid_from_stop = Logi.DOM.Element.hasClass ('combined_schedule_from_stop', 'logi_autocomplete_valid');
+				var valid_to_stop = Logi.DOM.Element.hasClass ('combined_schedule_to_stop', 'logi_autocomplete_valid');
+				var from_stop = $el ('combined_schedule_from_stop_id').value;
+				var to_stop = $el ('combined_schedule_to_stop_id').value;
+				if (!valid_from_stop || !valid_to_stop || from_stop == to_stop) {
+					Logi.UI.MessageBox.show ("\u041a\u043e\u043c\u0431\u0438\u043d\u0438\u0440\u0430\u043d\u043e \u0440\u0430\u0437\u043f\u0438\u0441\u0430\u043d\u0438\u0435 - \u0433\u0440\u0435\u0448\u043a\u0430", "\u041c\u043e\u043b\u044f \u0432\u044a\u0432\u0435\u0434\u0435\u0442\u0435 \u0432\u0430\u043b\u0438\u0434\u043d\u0438 \u043d\u0430\u0447\u0430\u043b\u043d\u0430 \u0438 \u043a\u0440\u0430\u0439\u043d\u0430 \u0441\u043f\u0438\u0440\u043a\u0430", function() {
+						Logi.DOM.Element.focus (valid_from_stop ? 'combined_schedule_to_stop' : 'combined_schedule_from_stop');
+					});
+					return;
+				}
+				Raz.getHtml (['schedule_combined', from_stop, to_stop], function (schedule_html) {
+					Logi.UI.MessageBox.show ("\u041a\u043e\u043c\u0431\u0438\u043d\u0438\u0440\u0430\u043d\u043e \u0440\u0430\u0437\u043f\u0438\u0441\u0430\u043d\u0438\u0435", schedule_html, Raz.resetCombined, { ok : "\u0437\u0430\u0442\u0432\u043e\u0440\u0438" }, { position : 'horizontal', top : 58, width : 700 } );
+					if ($el ('schedule_combined_wrapper')) {
+						tabs_create ({
+							containerCssClass : 'schedule_combined',
+							tabCssClass : 'schedule_combined_tab',
+							activeTabCssClass : 'schedule_combined_active_tab',
+							tabContainerCssClass : 'schedule_combined_content',
+							propagateClick : false
+						});
+					}
+				});
+			});
+
+
+
+
+			Raz.addModule ('line');
+			Raz.addModule ('stop');
+			Raz.addCommand ('findLine', 'line', function (form) {
+				var data = $fs (form);
+				Raz.getData (['line_exists', data.line_type, data.number], function (result) {
+					if (result) {
+						location.setUrl (data.line_type + '/' + data.number);
+					} else {
+						Logi.UI.MessageBox.show ("\u041d\u0435\u0443\u0441\u043f\u0435\u0448\u043d\u043e \u0442\u044a\u0440\u0441\u0435\u043d\u0435", "\u041d\u044f\u043c\u0430 \u043d\u0430\u043c\u0435\u0440\u0435\u043d\u0430 \u043b\u0438\u043d\u0438\u044f");
+					}
+				});
+			});
+
+			Raz.addCommand ('findStop', 'stop', function (form) {
+				var data = $fs (form);
+				if (data.stop_name.length > 2) {
+					Raz.getData (['stop_find', data.stop_name], function (result) {
+						if (result) {
+							if (result.length == 1) {
+								location.setUrl (result[0].url);
+							} else {
+								var stop_list = [];
+								for (var i = 0; i < result.length; i++) {
+									var st = result[i];
+									stop_list.push ('<a class="stop_search_select" href="' + st.url + '">' + st.name + '</a>');
+								}
+								stop_list = stop_list.join ('<br/>');
+								Logi.UI.MessageBox.show ("\u0418\u0437\u0431\u0435\u0440\u0435\u0442\u0435 \u0441\u043f\u0438\u0440\u043a\u0430", stop_list, null, { ok : "\u041e\u0442\u043a\u0430\u0437" }, { position : 'horizontal', top : 10 } );
+							}
+						} else {
+							Logi.UI.MessageBox.show ("\u041d\u0435\u0443\u0441\u043f\u0435\u0448\u043d\u043e \u0442\u044a\u0440\u0441\u0435\u043d\u0435", "\u041d\u044f\u043c\u0430 \u043d\u0430\u043c\u0435\u0440\u0435\u043d\u0430 \u0441\u043f\u0438\u0440\u043a\u0430");
+						}
+					});
+				} else {
+					Logi.UI.MessageBox.show ("\u041d\u0435\u0443\u0441\u043f\u0435\u0448\u043d\u043e \u0442\u044a\u0440\u0441\u0435\u043d\u0435", "\u0412\u044a\u0432\u0435\u0434\u0435\u0442\u0435 \u043f\u043e\u0432\u0435\u0447\u0435 \u043e\u0442 3 \u0441\u0438\u043c\u0432\u043e\u043b\u0430");
+				}
+			});
+
+			Raz.addCommand ('findStopSign', 'stop', function (form) {
+				var data = $fs (form);
+				Raz.getData (['stop_sign_find', data.stop_sign], function (result) {
+					if (result) {
+						location.setUrl ('stop/' + result.stop_id + '/' + result.url_name + '#' + data.stop_sign);
+					} else {
+						Logi.UI.MessageBox.show ("\u041d\u0435\u0443\u0441\u043f\u0435\u0448\u043d\u043e \u0442\u044a\u0440\u0441\u0435\u043d\u0435", "\u041d\u044f\u043c\u0430 \u043d\u0430\u043c\u0435\u0440\u0435\u043d\u0430 \u0441\u043f\u0438\u0440\u043a\u0430");
+					}
+				});
+			});
+			})();
+		</script>	</head>
+<body>
+   <!-- Begin Wrapper -->
+   <div id="wrapper" class="wrapper">
+
+		<!-- Begin Header -->
+		<div class="header">
+			<a class="quicksearch" href="./">Начало</a>
+
+<form id="quicksearch_stop" class="quicksearch" onsubmit="Raz.exec ('findStop', [this]); return false;">
+	<label for="quicksearch_stop_name">Име на спирка:</label>
+	<button>&raquo;</button>
+	<input id="quicksearch_stop_name" name="stop_name" />
+</form>
+
+<form id="quicksearch_stop_sign" class="quicksearch" onsubmit="Raz.exec ('findStopSign', [this]); return false;">
+	<label for="quicksearch_stop_sign">Спирка №:</label>
+	<button>&raquo;</button>
+	<input id="quicksearch_stop_sign" name="stop_sign" />
+</form>
+
+<form id="quicksearch_tm" class="quicksearch" onsubmit="Raz.exec ('findLine', [this]); return false;">
+	<label for="quicksearch_tm_number">Трамвай №:</label>
+	<input type="hidden" name="line_type" value="tramway" />
+	<button>&raquo;</button>
+	<input id="quicksearch_tm_number" name="number" />
+</form>
+
+<form id="quicksearch_tb" class="quicksearch" onsubmit="Raz.exec ('findLine', [this]); return false;">
+	<label for="quicksearch_tb_number">Тролейбус №:</label>
+	<input type="hidden" name="line_type" value="trolleybus" />
+	<button>&raquo;</button>
+	<input id="quicksearch_tb_number" name="number" />
+</form>
+
+<form id="quicksearch_autobus" class="quicksearch" onsubmit="Raz.exec ('findLine', [this]); return false;">
+	<label for="quicksearch_autobus_number">Автобус №:</label>
+	<input type="hidden" name="line_type" value="autobus" />
+	<button>&raquo;</button>
+	<input id="quicksearch_autobus_number" name="number" />
+</form>
+
+<a class="quicksearch" href="metro/1">Метро</a>
+		</div>
+		<div id="content" class="content">
+
+<div id="combined_schedule">
+	<div class="stops_section">
+		<h3>Как да стигна?:</h3>
+		<div class="stop_row">
+			<label for="combined_schedule_from_stop">От спирка</label>
+			<input type="hidden" id="combined_schedule_from_stop_id" />
+			<input type="text" id="combined_schedule_from_stop" />
+		</div>
+		<select id="combined_schedule_from_stop_autocomplete" size="5" class="logi_autocomplete"></select>
+		<div class="stop_row">
+			<label for="combined_schedule_to_stop">До спирка</label>
+			<input type="hidden" id="combined_schedule_to_stop_id" />
+			<input type="text" id="combined_schedule_to_stop" />
+		</div>
+		<select id="combined_schedule_to_stop_autocomplete" size="5" class="logi_autocomplete"></select>
+		<a href="#" onclick="Raz.exec ('combinedSchedule'); return false">намери</a>
+	</div>
+
+	<div class="stops_section" style="margin-top: 10px; padding: 10px 3px; font-weight: bold;">
+	    <a href="http://sofiabus.bg/izletni-linii" target="_blank">Излетни линии</a>
+	</div>
+</div>
+
+<div class="homepage">
+	<h2>
+		<a class="help" href="#" onclick="Raz.exec ('help', ['homepage']); return false;"><img class="tooltip" src="web/img/public/help_icon.gif" alt="Помощна информация" /></a>
+		Разписания	</h2>
+</div>
+
+<div id="lines_quick_access">
+	<div class="lines_section">
+		<h3>Трамвайни линии:</h3>
+		<ul>
+							<li><a href="tramway/1">1</a></li>
+							<li><a href="tramway/3">3</a></li>
+							<li><a href="tramway/4">4</a></li>
+							<li><a href="tramway/5">5</a></li>
+							<li><a href="tramway/6">6</a></li>
+							<li><a href="tramway/7">7</a></li>
+							<li><a href="tramway/8">8</a></li>
+							<li><a href="tramway/10">10</a></li>
+							<li><a href="tramway/11">11</a></li>
+							<li><a href="tramway/12">12</a></li>
+							<li><a href="tramway/18">18</a></li>
+							<li><a href="tramway/19">19</a></li>
+							<li><a href="tramway/20">20</a></li>
+							<li><a href="tramway/22">22</a></li>
+							<li><a href="tramway/23">23</a></li>
+					</ul>
+	</div>
+	<div class="lines_section">
+		<h3>Тролейбусни линии:</h3>
+		<ul>
+							<li><a href="trolleybus/1">1</a></li>
+							<li><a href="trolleybus/2">2</a></li>
+							<li><a href="trolleybus/4">4</a></li>
+							<li><a href="trolleybus/5">5</a></li>
+							<li><a href="trolleybus/6">6</a></li>
+							<li><a href="trolleybus/7">7</a></li>
+							<li><a href="trolleybus/8">8</a></li>
+							<li><a href="trolleybus/9">9</a></li>
+							<li><a href="trolleybus/11">11</a></li>
+							<li><a href="trolleybus/11-%D0%90">11-А</a></li>
+					</ul>
+	</div>
+	<div class="lines_section">
+		<h3>Градски автобусни линии:</h3>
+		<ul>
+							<li><a href="autobus/1-%D0%A2%D0%91">1-ТБ</a></li>
+							<li><a href="autobus/6-%D0%A2%D0%9C">6-ТМ</a></li>
+							<li><a href="autobus/9">9</a></li>
+							<li><a href="autobus/10-%D0%A2%D0%9C">10-ТМ</a></li>
+							<li><a href="autobus/11">11</a></li>
+							<li><a href="autobus/45">45</a></li>
+							<li><a href="autobus/60">60</a></li>
+							<li><a href="autobus/65">65</a></li>
+							<li><a href="autobus/72">72</a></li>
+							<li><a href="autobus/73">73</a></li>
+							<li><a href="autobus/74">74</a></li>
+							<li><a href="autobus/75">75</a></li>
+							<li><a href="autobus/76">76</a></li>
+							<li><a href="autobus/77">77</a></li>
+							<li><a href="autobus/78">78</a></li>
+							<li><a href="autobus/79">79</a></li>
+							<li><a href="autobus/82">82</a></li>
+							<li><a href="autobus/83">83</a></li>
+							<li><a href="autobus/84">84</a></li>
+							<li><a href="autobus/85">85</a></li>
+							<li><a href="autobus/86">86</a></li>
+							<li><a href="autobus/88">88</a></li>
+							<li><a href="autobus/94">94</a></li>
+							<li><a href="autobus/101">101</a></li>
+							<li><a href="autobus/102">102</a></li>
+							<li><a href="autobus/108">108</a></li>
+							<li><a href="autobus/111">111</a></li>
+							<li><a href="autobus/113">113</a></li>
+							<li><a href="autobus/120">120</a></li>
+							<li><a href="autobus/204">204</a></li>
+							<li><a href="autobus/213">213</a></li>
+							<li><a href="autobus/260">260</a></li>
+							<li><a href="autobus/280">280</a></li>
+							<li><a href="autobus/285">285</a></li>
+							<li><a href="autobus/294">294</a></li>
+							<li><a href="autobus/305">305</a></li>
+							<li><a href="autobus/306">306</a></li>
+							<li><a href="autobus/309">309</a></li>
+							<li><a href="autobus/310">310</a></li>
+							<li><a href="autobus/314">314</a></li>
+							<li><a href="autobus/384">384</a></li>
+							<li><a href="autobus/404">404</a></li>
+							<li><a href="autobus/413">413</a></li>
+							<li><a href="autobus/505">505</a></li>
+							<li><a href="autobus/604">604</a></li>
+					</ul>
+	</div>
+	<div class="lines_section">
+		<h3>Крайградски автобусни линии:</h3>
+		<ul>
+							<li><a href="autobus/1">1</a></li>
+							<li><a href="autobus/3">3</a></li>
+							<li><a href="autobus/4">4</a></li>
+							<li><a href="autobus/5">5</a></li>
+							<li><a href="autobus/6">6</a></li>
+							<li><a href="autobus/7">7</a></li>
+							<li><a href="autobus/8">8</a></li>
+							<li><a href="autobus/10">10</a></li>
+							<li><a href="autobus/12">12</a></li>
+							<li><a href="autobus/14">14</a></li>
+							<li><a href="autobus/18">18</a></li>
+							<li><a href="autobus/20">20</a></li>
+							<li><a href="autobus/21-22">21-22</a></li>
+							<li><a href="autobus/23">23</a></li>
+							<li><a href="autobus/24">24</a></li>
+							<li><a href="autobus/25">25</a></li>
+							<li><a href="autobus/26">26</a></li>
+							<li><a href="autobus/27">27</a></li>
+							<li><a href="autobus/28">28</a></li>
+							<li><a href="autobus/29">29</a></li>
+							<li><a href="autobus/30">30</a></li>
+							<li><a href="autobus/31">31</a></li>
+							<li><a href="autobus/42">42</a></li>
+							<li><a href="autobus/44">44</a></li>
+							<li><a href="autobus/44-%D0%91">44-Б</a></li>
+							<li><a href="autobus/47">47</a></li>
+							<li><a href="autobus/48">48</a></li>
+							<li><a href="autobus/49">49</a></li>
+							<li><a href="autobus/54">54</a></li>
+							<li><a href="autobus/56">56</a></li>
+							<li><a href="autobus/59">59</a></li>
+							<li><a href="autobus/63">63</a></li>
+							<li><a href="autobus/64">64</a></li>
+							<li><a href="autobus/66">66</a></li>
+							<li><a href="autobus/67">67</a></li>
+							<li><a href="autobus/69">69</a></li>
+							<li><a href="autobus/70">70</a></li>
+							<li><a href="autobus/81">81</a></li>
+							<li><a href="autobus/90">90</a></li>
+							<li><a href="autobus/93">93</a></li>
+							<li><a href="autobus/98">98</a></li>
+							<li><a href="autobus/100">100</a></li>
+							<li><a href="autobus/103">103</a></li>
+							<li><a href="autobus/107">107</a></li>
+							<li><a href="autobus/112">112</a></li>
+							<li><a href="autobus/117">117</a></li>
+							<li><a href="autobus/118">118</a></li>
+							<li><a href="autobus/119">119</a></li>
+							<li><a href="autobus/122">122</a></li>
+							<li><a href="autobus/123">123</a></li>
+							<li><a href="autobus/150">150</a></li>
+					</ul>
+	</div>
+</div>
+
+<div id="stops_quick_access">
+	<div class="stops_section">
+		<h3>Основни спирки в София:</h3>
+		<ul>
+							<li><a href="stop/31/avtostanciya-hladilnika">АВТОСТАНЦИЯ ХЛАДИЛНИКА</a></li>
+							<li><a href="stop/147/bul-goce-delchev">БУЛ. ГОЦЕ ДЕЛЧЕВ</a></li>
+							<li><a href="stop/216/gara-poduyane">ГАРА ПОДУЯНЕ</a></li>
+							<li><a href="stop/255/darzhavna-pechatnica">ДЪРЖАВНА ПЕЧАТНИЦА</a></li>
+							<li><a href="stop/289/zh-k-krasno-selo">Ж.К. КРАСНО СЕЛО</a></li>
+							<li><a href="stop/398/kv-orlandovci">КВ. ОРЛАНДОВЦИ</a></li>
+							<li><a href="stop/1108/letishte-sofiya-terminal-2">ЛЕТИЩЕ СОФИЯ ТЕРМИНАЛ 2</a></li>
+							<li><a href="stop/475/metrostanciya-k-velichkov">МЕТРОСТАНЦИЯ К.ВЕЛИЧКОВ</a></li>
+							<li><a href="stop/1139/metrostanciya-mladost-1">МЕТРОСТАНЦИЯ МЛАДОСТ 1</a></li>
+							<li><a href="stop/478/metrostanciya-slivnica">МЕТРОСТАНЦИЯ СЛИВНИЦА</a></li>
+							<li><a href="stop/460/metrostanciya-carigradsko-shose">МЕТРОСТАНЦИЯ ЦАРИГРАДСКО ШОСЕ</a></li>
+							<li><a href="stop/344/nsbal-po-onkologiya">НСБАЛ ПО ОНКОЛОГИЯ</a></li>
+							<li><a href="stop/574/pl-lavov-most">ПЛ. ЛЪВОВ МОСТ</a></li>
+							<li><a href="stop/575/pl-makedoniya">ПЛ. МАКЕДОНИЯ</a></li>
+							<li><a href="stop/577/pl-orlov-most">ПЛ. ОРЛОВ МОСТ</a></li>
+							<li><a href="stop/583/pl-stochna-gara">ПЛ. СТОЧНА ГАРА</a></li>
+							<li><a href="stop/586/pl-centralna-gara">ПЛ. ЦЕНТРАЛНА ГАРА</a></li>
+							<li><a href="stop/664/rumansko-posolstvo">РУМЪНСКО ПОСОЛСТВО</a></li>
+							<li><a href="stop/707/seminariyata">СЕМИНАРИЯТА</a></li>
+							<li><a href="stop/762/su-sv-kliment-ohridski">СУ  СВ.КЛИМЕНТ ОХРИДСКИ</a></li>
+							<li><a href="stop/862/ul-gen-gurko">УЛ. ГЕН. ГУРКО</a></li>
+							<li><a href="stop/380/ul-yerusalim">УЛ. ЙЕРУСАЛИМ</a></li>
+							<li><a href="stop/768/umbal-sv-anna">УМБАЛ СВ. АННА</a></li>
+							<li><a href="stop/1055/hotel-pliska">ХОТЕЛ ПЛИСКА</a></li>
+							<li><a href="stop/1062/centar-po-higiena">ЦЕНТЪР ПО ХИГИЕНА</a></li>
+					</ul>
+	</div>
+</div>
+		</div>
+		<div class="footer">
+			Разработено от: <a href="http://www.logicasoft-bg.com" target="_blank">ЛогикаСофт Солюшънс</a>
+		</div>
+	</div>
+   <!-- End Wrapper -->
+</body>
+
+</html>
