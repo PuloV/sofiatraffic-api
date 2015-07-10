@@ -28,11 +28,19 @@ class PageParsing:
 
     @classmethod
     def parseScheduleName(cls, content, schedule_id):
-        SCHEDULE_BTN_RE = '<a.*?id="schedule_{}_button".*?</a>'.format(schedule_id)
+        SCHEDULE_BTN_RE = 'id="schedule_{}_button".*?>.*?</a>'.format(schedule_id)
         SCHEDULE_BTN_TITLE_RE = '<span>.*?</span>'
         schedule_btn = re.findall(SCHEDULE_BTN_RE, content)[-1]
-        schedule_title = re.findall(SCHEDULE_BTN_TITLE_RE, schedule_btn).pop()
+        schedule_title = re.findall(SCHEDULE_BTN_TITLE_RE, schedule_btn)[-1]
+        schedule_title = schedule_title.replace("<span>", "")
+        schedule_title = schedule_title.replace("</span>", "")
         return schedule_title
+
+    @classmethod
+    def checkIsWeeklySchedule(cls, schedule):
+        # no idea why this doesnt work
+        # return schedule == "делник"
+        return schedule == b'\xd0\xb4\xd0\xb5\xd0\xbb\xd0\xbd\xd0\xb8\xd0\xba'
 
     @classmethod
     def parseRoutesStops(cls, content):
@@ -148,16 +156,20 @@ class PageParsing:
                         continue
 
                     direction_stops_times.append({
-                        "stop": stop,
                         "url": stop_url,
                         "times": schedule_times,
                         "schedule_id": schedule,
-                        "direction_id": direction_id
+                        "weekly_schedule": cls.checkIsWeeklySchedule(schedule_name),
+                        "direction_id": direction_id,
+                        "stop": {
+                            "schedule": schedule_name,
+                            "direction": direction[1],
+                            "stop_name": stop["stop_name"],
+                            "stop_no": stop["stop_no"]
+                            }
                         })
-                    break
 
         print(json.dumps(direction_stops_times))
-
 
     @classmethod
     def parseMainPage(cls):
