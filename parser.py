@@ -3,6 +3,12 @@ import re
 import time
 from html.parser import HTMLParser
 import json
+import os
+import datetime
+import time
+import threading
+from multiprocessing.dummy import Pool as ThreadPool
+
 
 class PageParsing:
 
@@ -95,6 +101,7 @@ class PageParsing:
 
     @classmethod
     def getRouteDirectionsPage(cls, route):
+        time_last = time.time()
         route_url = "{}{}".format(cls.MAIN_PAGE, route)
         r = requests.get(route_url)
         content = "{}".format(r.content)
@@ -169,7 +176,20 @@ class PageParsing:
                             }
                         })
 
-        print(json.dumps(direction_stops_times))
+        # print(json.dumps(direction_stops_times))
+        today = datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m-%d')
+        json_file = "{}/{}.json".format(today, route.replace("/", "_"))
+        temp_file = open(json_file, 'w')
+        temp_file.write(json.dumps(direction_stops_times))
+        temp_file.close()
+        current_time = time.time()
+        print(json_file, current_time - time_last)
+        return direction_stops_times
+
+    @classmethod
+    def runThread(cls, url):
+        line = list(url.keys())[0]
+        cls.getRouteDirectionsPage(url.get(line))
 
     @classmethod
     def parseMainPage(cls):
@@ -208,11 +228,26 @@ class PageParsing:
         lp = TransportLinksParser()
         lp.feed(content)
 
+        today = datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m-%d')
+        if not os.path.exists(today):
+            os.mkdir(today)
+
         urls = lp.data
+        pool = ThreadPool(4)
+        pool.map(cls.runThread, urls)
+        return
         for url in urls:
             line = list(url.keys())[0]
-            cls.getRouteDirectionsPage(url.get(line))
+            print(url)
+            # cls.getRouteDirectionsPage(url.get(line))
+            t = threading.Thread(target=cls.getRouteDirectionsPage, args = (url.get(line)))
+            t.daemon = True
+            t.start()
             return
 
-
-PageParsing.parseMainPage()
+if __name__ == '__main__':
+    time_last = time.time()
+    print("Started parsing the {} website!".format(PageParsing.MAIN_PAGE))
+    PageParsing.parseMainPage()
+    current_time = time.time()
+    print("Parsed for {} seconds".format(current_time - time_last))
