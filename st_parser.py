@@ -121,7 +121,6 @@ class PageParsing:
             directions.add((url, title))
         return directions
 
-
     @classmethod
     def get_route_directions_page(cls, route):
         time_last = time.time()
@@ -129,11 +128,13 @@ class PageParsing:
         r = requests.get(route_url)
         content = "{}".format(r.content)
 
-
         # get all times for this route
         stops = cls.parse_routes_stops(content)
+        # get the schedule buttons for the current route
         schedules = cls.parse_schedule_buttons(content)
+        # get the directions for the current route
         directions = cls.parse_route_direction(content, route)
+
         direction_stops_times = []
 
         for schedule in schedules:
