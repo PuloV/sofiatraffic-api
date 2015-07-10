@@ -97,12 +97,7 @@ class PageParsing:
         return "server/html/schedule_load/{}/{}/{}".format(schedule, direction, stop_no)
 
     @classmethod
-    def get_route_directions_page(cls, route):
-        time_last = time.time()
-        route_url = "{}{}".format(cls.MAIN_PAGE, route)
-        r = requests.get(route_url)
-        content = "{}".format(r.content)
-
+    def parse_route_direction(cls, content, route):
         # collect data for the directions of the route
         DIRECTIONS_RE = '<a href="/{}#direction/\d*" id="schedule_direction_\d*_\d*_button" class=".*?schedule_view_direction_tab">.*?</a>'.format(route)
         directions_result = re.findall(DIRECTIONS_RE, content)
@@ -124,10 +119,21 @@ class PageParsing:
             title = title.replace("n>", "")
             title = title.replace("<", "")
             directions.add((url, title))
+        return directions
+
+
+    @classmethod
+    def get_route_directions_page(cls, route):
+        time_last = time.time()
+        route_url = "{}{}".format(cls.MAIN_PAGE, route)
+        r = requests.get(route_url)
+        content = "{}".format(r.content)
+
 
         # get all times for this route
         stops = cls.parse_routes_stops(content)
         schedules = cls.parse_schedule_buttons(content)
+        directions = cls.parse_route_direction(content, route)
         direction_stops_times = []
 
         for schedule in schedules:
