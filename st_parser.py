@@ -5,7 +5,6 @@ from html.parser import HTMLParser
 import json
 import os
 import datetime
-import time
 import threading
 from multiprocessing.dummy import Pool as ThreadPool
 
@@ -249,6 +248,7 @@ class PageParsing:
             t.daemon = True
             t.start()
             return
+
 
 if __name__ == '__main__':
     time_last = time.time()
